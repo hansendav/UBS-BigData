@@ -1,0 +1,20 @@
+/mnt/yarn/usercache/e2405193/appcache/application_1733814245147_0009/container_1733814245147_0009_01_000001/pyspark.zip/pyspark/ml/linalg/__init__.py:81: UserWarning: A NumPy version >=1.22.4 and <2.3.0 is required for this version of SciPy (detected version 1.20.0)
+Main started at 14:53:26
+Spark session created
+Number of rows in train split: 2418
+Number of rows in test split: 1215
+Pipeline created
+Fit pipeline started at 14:53:40
+Pipeline fitting done
+Fit pipeline finished at 15:40:59
+Runtime of task Fit pipeline: 00:47:19
+Test inference started at 15:40:59
+Test set inference done
+Test inference finished at 15:41:00
+Runtime of task Test inference: 00:00:00
+Evaluation started at 15:41:00
+Evaluation done: Accuracy: 0.40280830929869144
+Evaluation finished at 15:52:49
+Runtime of task Evaluation: 00:11:49
+Main finished at 15:52:50
+Runtime of task Main: 00:59:23

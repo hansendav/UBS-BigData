@@ -1,0 +1,19 @@
+Main started at 07:13:01
+Spark session created
+Number of rows in train split: 2418
+Number of rows in test split: 1215
+Pipeline created
+Fit pipeline started at 07:13:16
+Pipeline fitting done
+Fit pipeline finished at 07:59:23
+Runtime of task Fit pipeline: 00:46:07
+Test inference started at 07:59:23
+Test set inference done
+Test inference finished at 07:59:23
+Runtime of task Test inference: 00:00:00
+Evaluation started at 07:59:23
+Evaluation done: Accuracy: 0.40194574858335647
+Evaluation finished at 08:11:37
+Runtime of task Evaluation: 00:12:13
+Main finished at 08:11:37
+Runtime of task Main: 00:58:36
