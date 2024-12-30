@@ -1,0 +1,46 @@
+﻿ID,ID_NEW,DESC
+111,1,Continuous urban fabric
+112,2,Discontinuous urban fabric
+121,3,Industrial or commercial units
+122,4,Road and rail networks and associated land
+123,5,Port areas
+124,6,Airports
+131,7,Mineral extraction sites
+132,8,Dump sites
+133,9,Construction sites
+141,10,Green urban areas
+142,11,Sport and leisure facilities
+211,12,Non-irrigated arable land
+212,13,Permanently irrigated land
+213,14,Rice fields
+221,15,Vineyards
+222,16,Fruit trees and berry plantations
+223,17,Olive groves
+231,18,Pastures
+241,19,Annual crops associated with permanent crops
+242,20,Complex cultivation patterns
+243,21,Land principally occupied by agriculture with significant areas of natural vegetation
+244,22,Agro-forestry areas
+311,23,Broad-leaved forest
+312,24,Coniferous forest
+313,25,Mixed forest
+321,26,Natural grassland
+322,27,Moors and heathland
+323,28,Sclerophyllous vegetation
+324,29,Transitional woodland/shrub
+331,30,Beaches dunes  sands
+332,31,Bare rock
+333,32,Sparsely vegetated areas
+334,33,Burnt areas
+335,34,Glaciers and perpetual snow
+411,35,Inland marshes
+412,36,Peatbogs
+421,37,Salt marshes
+422,38,Salines
+423,39,Intertidal flats
+511,40,Water courses
+512,41,Water bodies
+521,42,Coastal lagoons
+522,43,Estuaries
+523,44,Sea and ocean
+999,99,Unlabeled
