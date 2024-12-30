@@ -10,7 +10,7 @@
 # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN
 # Adapth the bucket and parquet file paths to the respective locations in S3
 # Run the script with the following command:
-# python scripts/pyarrow_s3.py 
+# python scripts/create_custom_meta.py 
 
 
 #------------------------------------------------------------------------------
