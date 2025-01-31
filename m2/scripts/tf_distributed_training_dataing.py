@@ -1,14 +1,15 @@
 # Multi-Worker Distributed Training with TensorFlow
 # Author: David Hansen 
 # Date: 2021-07-01 
+# Indended use: 
+# Experiment with distributed training on AWS EC2 instances and tensorflow.
+# -----------------------------------------------------------------------------
 
 # Imports ---------------------------------------------------------------------
 import os
 import tensorflow as tf 
 import keras 
 from keras import layers
-import pyarrow as pa
-import pyarrow.fs as fs 
 import pyarrow.parquet as pq
 import pandas as pd 
 import re 
@@ -19,14 +20,15 @@ import time
 import json
 
 # Import segmentation models
-os.environ["SM_FRAMEWORK"] = "tf.keras"
-import segmentation_models as sm
+os.environ["SM_FRAMEWORK"] = "tf.keras" # set the segmentation models framework to keras
 
  # Clear previous sessions 
-keras.backend.clear_session()
+keras.backend.clear_session() # clear any previous sessions
 
 
 # Label encodings 
+# dict here <- change this and read from a file 
+# used to map the label values to classes within [0, 44]
 label_encodings = {
     111: 0, 112: 1, 121: 2, 122: 3, 123: 4, 124: 5, 131: 6, 132: 7, 133: 8, 141: 9, 142: 10,
     211: 11, 212: 12, 213: 13, 221: 14, 222: 15, 223: 16, 231: 17, 241: 18, 242: 19, 243: 20,
@@ -89,7 +91,7 @@ def get_dataframes(path=None, subsample=None):
     df_train = df[df['split'] == 'train']
     df_test = df[df['split'] == 'test']
 
-    if subsample is not None: 
+    if subsample is not None: # else use full dataset
         df_train = df_train.sample(frac=subsample, random_state=42)
         df_test = df_test.sample(frac=subsample, random_state=42)
 
@@ -101,22 +103,32 @@ def get_dataframes(path=None, subsample=None):
 
 # function to read image band from s3
 def read_img_with_rasterio(file, label=False):
+    """
+    Reads an image file using rasterio and converts it to a TensorFlow tensor.
+    Args:
+        file (str): Path to the image file to be read.
+        label (bool, optional): If True, the image is treated as a label and 
+                                encoded using label_encodings. Defaults to False.
+    Returns:
+        tf.Tensor: The image data as a TensorFlow tensor with channels last and 
+                   cast to float32.
+    """
     with rasterio.open(file) as src:
         image = src.read()
     if label == True: 
         image = np.vectorize(label_encodings.get)(image)
         tensor = tf.convert_to_tensor(image) # convert numpy array to tensor
-        tensor = tf.transpose(tensor, perm=[1, 2, 0]) # change channel pos to last
+        tensor = tf.transpose(tensor, perm=[1, 2, 0]) # change channel pos to last as necessary for Keras
         tensor = tf.cast(tensor, tf.float32) # cast to float32 for training
     else:        
         tensor = tf.convert_to_tensor(image) # convert numpy array to tensor
         tensor = tf.transpose(tensor, perm=[1, 2, 0]) # change channel pos to last
         tensor = tf.cast(tensor, tf.float32) # cast to float32 for training
         
-    return tensor # return the tensor
+    return tensor # return float.32 tensor (H, W, C)
 
 def get_s1_bands(input_string):
-    vv = re.sub(r'([^/]+)/$', r'\1/\1_VV.tif', input_string)
+    vv = re.sub(r'([^/]+)/$', r'\1/\1_VV.tif', input_string) # replace the last / with /VV.tif
     vh = re.sub(r'([^/]+)/$', r'\1/\1_VH.tif', input_string)
     return [vv, vh]
 
@@ -192,10 +204,6 @@ def get_data_set_from_df(df, global_batch_size, strategy):
     #dataset = dataset.with_options(options)
     return dataset
 
-
-# 
-
-
 def train_multi_worker(meta_path, tfconfig_path, local_batch_size, num_workers, chkpt_name, log_name, subsample):
 
    # Load TF_CONFIG from a JSON file
@@ -213,6 +221,8 @@ def train_multi_worker(meta_path, tfconfig_path, local_batch_size, num_workers, 
     strategy = tf.distribute.MultiWorkerMirroredStrategy()
     print(f'Number of workers in strategy: {strategy.num_replicas_in_sync}')
 
+
+    # check if your you expect setup is present
     if strategy.num_replicas_in_sync != num_workers:
         raise ValueError(
             f'Number of workers does not match the number of replicas'
@@ -227,29 +237,25 @@ def train_multi_worker(meta_path, tfconfig_path, local_batch_size, num_workers, 
 
 
     # get datasets
-
     data_train = get_data_set_from_df(df_train, global_batch_size, strategy)
     data_test = get_data_set_from_df(df_test, global_batch_size, strategy)
 
 
-    steps_per_epoch = len(df_train) // global_batch_size
-    validation_steps = len(df_test) // global_batch_size
+    # manually setting the steps per epoch not used 
+    #steps_per_epoch = len(df_train) // global_batch_size
+    #validation_steps = len(df_test) // global_batch_size
 
-
-    data_train = get_data_set_from_df(df_train, global_batch_size, strategy)
-    data_test = get_data_set_from_df(df_test, global_batch_size, strategy) 
-    
+    # instantiate DistributeDataset objects
     data_train = strategy.experimental_distribute_dataset(data_train)
     data_test = strategy.experimental_distribute_dataset(data_test)
 
 
-    # instantiate model 
+    # instantiate and compile the model in the strategy scope
     with strategy.scope():
-
         model = build_and_compile_model()
 
     
-    # instantiate logging callbacks 
+    # instantiate logging callbacks only if worker is cheif
     callbacks = []
 
     # check if current worker is chief -> only here we log 
@@ -273,12 +279,12 @@ def train_multi_worker(meta_path, tfconfig_path, local_batch_size, num_workers, 
         callbacks.append(checkpoint_callback)
 
     # train the model 
-    # train model 
+    # and get total time for training call
     start = time.time()
     hist = model.fit(data_train,
         epochs=2,
         validation_data=data_test,
-        verbose=1,
+        verbose=1, # normally set to 2 but debug here
         #steps_per_epoch=steps_per_epoch, 
         callbacks=callbacks
     )

@@ -93,6 +93,16 @@ def get_dataframes(path=None, subsample=None):
 
 # function to read image band from s3
 def read_img_with_rasterio(file, label=False):
+    """
+    Reads an image file using rasterio and converts it to a TensorFlow tensor.
+    Args:
+        file (str): Path to the image file to be read.
+        label (bool, optional): If True, the image is treated as a label and 
+                                encoded using label_encodings. Defaults to False.
+    Returns:
+        tf.Tensor: The image data as a TensorFlow tensor with channels last and 
+                   cast to float32.
+    """
     with rasterio.open(file) as src:
         image = src.read()
     if label == True: 
@@ -181,7 +191,6 @@ def get_data_set_from_df(df, global_batch_size, strategy):
     return dataset
 
 
-# Setup Dataset ---------------------------------------------------------------
 def main(PATH_TO_PARQUET, SUBSAMPLE_RATIO, BATCH_SIZE, CHECKPOINT_NAME, LOGS_NAME):
     
     # clear previous sessions
@@ -218,28 +227,8 @@ def main(PATH_TO_PARQUET, SUBSAMPLE_RATIO, BATCH_SIZE, CHECKPOINT_NAME, LOGS_NAM
         verbose=1
     )
 
-    if not os.path.exists('./tb_logs'):
-        os.makedirs('./tb_logs')
-
-    tb_callback = keras.callbacks.TensorBoard(
-            f'./tb_logs/tb_{LOGS_NAME}',
-            update_freq='batch'
-        )
-
     # instantiate model
-    model = sm.Unet('resnet34', input_shape=(None, None, 6), classes=45, activation='softmax', encoder_weights=None)
-
-    #model.summary()
-    #model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-
-    # compile model 
-    model.compile(
-        'Adam',
-        loss=sm.losses.jaccard_loss,
-        metrics=[sm.metrics.iou_score],
-    )
-    
-    model.jit_compile = False # NECESSARY HERE !!!
+    model = build_and_compile_model()
 
     start = time.time()
     hist = model.fit(data_train,
